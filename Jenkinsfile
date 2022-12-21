@@ -1,31 +1,18 @@
 pipeline{
-    agent any
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '5'))
+    node {   
+    stage('Clone repository') {
+        git credentialsId: 'git', url: 'https://github.com/hassiejaya/myflix-ui.git'
     }
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('assignmentlk-dockerhub')
+    
+    stage('Build image') {
+       dockerImage = docker.build("assignmentlk/myflix:latest")
     }
-    stages{
-        stage('Build'){
-            steps{  
-                script{
-                    dockerImage = docker.build("myflix-ui-img")
-                }   
-            }
+    
+ stage('Push image') {
+        withDockerRegistry([ credentialsId: "assignmentlk-dockerhub", url: "https://hub.docker.com/repository/docker/assignmentlk/myflix" ]) {
+        dockerImage.push()
         }
-       
-        stage('Login'){
-            steps{
-                sh 'echo $DOCKERHUB-CREDENTIALS-PW | docker login -u $DOCKERHUB-CREDENTIALS-USR --password-stdin'
-            }
-        }
-         stage('Push-ui'){
-            steps{
-                sh 'docker push myflix-ui-img'
-            }
-        }
-       
-    }
+    }    
+}
    
 }
